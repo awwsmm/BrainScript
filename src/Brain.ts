@@ -19,6 +19,7 @@ export function readUTF32Char(): UTF32Char {
 }
 
 export function bf ( program: string,
+  classic: boolean,
   memory: UInt32 = UInt32.fromNumber(1000),
   input: () => UTF32Char = readUTF32Char
     ): string {
@@ -37,18 +38,27 @@ export function bf ( program: string,
 
     // move back one cell in memory
     if (op === '<') {
-      try {
-        memoryPointer = memoryPointer.minus(1)
-      } catch (error) {
-        throw new Error("cannot decrement memory pointer below minimum index 0")
+      if (classic) {
+        if (memoryPointer.lt(1)) memoryPointer = memory.minus(1)
+        else memoryPointer = memoryPointer.minus(1)
+      } else {
+        try {
+          memoryPointer = memoryPointer.minus(1)
+       } catch (error) {
+         throw new Error("cannot decrement memory pointer below minimum index 0... try setting `classic` to `true`")
+       }
       }
 
     // move forward one cell in memory
     } else if (op === '>') {
-
-      if (memoryPointer.ge(memory.minus(1)))
-        throw new Error(`cannot increment memory pointer above maximum index ${memory.minus(1).toString()}`)
-      else memoryPointer = memoryPointer.plus(1)
+      if (classic) {
+        if (memoryPointer.ge(memory.minus(1))) memoryPointer = UInt32.fromNumber(0)
+        else memoryPointer = memoryPointer.plus(1)
+      } else {
+        if (memoryPointer.ge(memory.minus(1)))
+          throw new Error(`cannot increment memory pointer above maximum index ${memory.minus(1).toString()}... try setting \`classic\` to \`true\``)
+        else memoryPointer = memoryPointer.plus(1)
+      }
 
     // if not '<' or '>', invalid argument
     } else throw new Error(`movePointer received invalid op: ${op}`)
@@ -62,13 +72,23 @@ export function bf ( program: string,
     const value: UInt32 = state[index]
 
     if (op === '+') {
-      if (value.ge(UInt32.MAX_VALUE))
-        throw new Error(`cell ${index} is already at maximum allowable value, 2^32 - 1`)
-      else state[index] = value.plus(1)
+      if (classic) {
+        if (value.ge(255)) state[index] = UInt32.fromNumber(0)
+        else state[index] = value.plus(1)
+      } else {
+        if (value.ge(UInt32.MAX_VALUE))
+          throw new Error(`cell ${index} is already at maximum allowable value, 2^32 - 1... try setting \`classic\` to \`true\``)
+        else state[index] = value.plus(1)
+      }
     } else if (op === '-') {
-      if (value.le(UInt32.MIN_VALUE))
-        throw new Error(`cell ${index} is already at minimum allowable value, 0`)
-      else state[index] = value.minus(1)
+      if (classic) {
+        if (value.lt(1)) state[index] = UInt32.fromNumber(255)
+        else state[index] = value.minus(1)
+      } else {
+        if (value.le(UInt32.MIN_VALUE))
+          throw new Error(`cell ${index} is already at minimum allowable value, 0... try setting \`classic\` to \`true\``)
+        else state[index] = value.minus(1)
+      }
     } else {
       throw new Error(`changeCell received invalid op: ${op}`)
     }
@@ -178,7 +198,7 @@ export function bf ( program: string,
   return output
 }
 
-export function brain(): void {
+export function brain (classic: boolean): void {
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -201,7 +221,7 @@ export function brain(): void {
   }).on('close', () => {
     console.log("\n~~~ OUTPUT ~~~~~~~~~~~🧠🤔~~~~~~~~~~~~~~~~~~~~~~\n")
     try {
-      console.log(bf(program))
+      console.log(bf(program, classic))
       console.log("\n~~~ DONE! ~~~~~~~~~~~~🧠😎~~~~~~~~~~~~~~~~~~~~~~\n")
       process.exit(0)
     } catch (error) {
