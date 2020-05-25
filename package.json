@@ -26,7 +26,7 @@
   "homepage": "https://github.com/awwsmm/BrainScript#readme",
   "dependencies": {
     "readline-sync": "^1.4.10",
-    "utf32char": "^1.3.0"
+    "utf32char": "^1.3.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
