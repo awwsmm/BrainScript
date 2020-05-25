@@ -198,38 +198,100 @@ export function bf ( program: string,
   return output
 }
 
-export function brain (classic: boolean): void {
+export function brain (): void {
+
+  let mode: boolean = false // default mode
+
+  const signoffs: Array<string> = [
+    "Totsiens",      "Ma'a as-salaama", "Bidāẏa",      "Zdravo",          "Joigin",
+    "Donadagohvi",   "Doviđenja",       "Sbohem",      "Farvel",          "Tot ziens",
+    "Nägemist",      "Näkemiin",        "Au Revoir",   "Auf Wiedersehen", "Yasou",
+    "Aloha",         "L'hitraot",       "Namaste",     "Viszlát",         "Vertu sæll",
+    "Sampai Jumpa",  "Slán",            "Arrivederci", "Sayōnara",        "안녕",
+    "Vale",          "Uz redzēšanos",   "Atsiprasau",  "Zài jiàn",        "Ha det bra",
+    "Khodaa haafez", "Żegnaj",          "Adeus",       "Alweda",          "La revedere",
+    "Прощай",        "Dovidenia",       "Nasvidenje",  "Adios",           "Adjö",
+    "Poitu varein",  "Laa Gòn",         "Görüşürüz",   "Do pobachennia",  "Khuda hafiz",
+    "Tạm biệt",      "Hwyl fawr",       "Hamba kahle", "再见",             "وداعا",
+    "May the force be with you",        "ลาก่อน",       "பிரியாவிடை",       "Namárië",
+    "Qapla'",
+    "Live long and prosper"
+  ]
+
+  const signoff = "👋 " + signoffs[Math.floor(Math.random() * signoffs.length)];
 
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "  "
+    prompt: "\n🧠: "
   })
 
-  console.log("\nEnter or paste your BF code below")
-  console.log("  and type CTRL+D on a blank line to interpret.")
-  console.log("    (CTRL-C to quit.)\n")
-  console.log("~~~ INPUT ~~~~~~~~~~~~🧠🤬~~~~~~~~~~~~~~~~~~~~~~\n")
+  console.log("\nEnter single-line BF code below or")
+  console.log("  type :paste to paste multiline code")
+  console.log("  type :mode to toggle classic / default mode")
+  console.log("  type :quit or enter <CTRL>-C or <CTRL>-D to quit")
 
-  let program: string = ""
+  let multiLine: string = ""
+  let pasteMode: boolean = false
+  let previousLine: string = ""
 
   rl.prompt()
 
-  rl.on('line', (line: string) => {
-    program += line
-    rl.prompt()
-  }).on('close', () => {
-    console.log("\n~~~ OUTPUT ~~~~~~~~~~~🧠🤔~~~~~~~~~~~~~~~~~~~~~~\n")
+  function interpret (program: string, mode: boolean): void {
     try {
-      console.log(bf(program, classic))
-      console.log("\n~~~ DONE! ~~~~~~~~~~~~🧠😎~~~~~~~~~~~~~~~~~~~~~~\n")
-      process.exit(0)
+      console.log(bf(program, mode))
     } catch (error) {
-      console.log(" !!! Program encountered an error:")
       console.log(error.message)
-      console.log("\n~~~ Oops! ~~~~~~~~~~~~🧠🐛~~~~~~~~~~~~~~~~~~~~~~\n")
-      process.exit(1)
     }
+  }
+
+  rl.on('line', (line: string) => {
+
+    // continue in :paste mode
+    if (pasteMode) {
+
+      // exit :paste mode
+      if (previousLine === "" && previousLine === line) {
+        console.log("~~~~~~~~~~~~~~~ BEGIN OUTPUT ~~~~~~~~~~~~~~\n")
+        interpret(multiLine, mode)
+        multiLine = ""
+        pasteMode = false
+        rl.prompt()
+
+      // continue in :paste mode
+      } else {
+        previousLine = line
+        multiLine += line
+      }
+
+    // enter :paste mode
+    } else if (line === ":paste" && multiLine === "" && !pasteMode) {
+      console.log("\nEntering multiline input mode.")
+      console.log("Enter two blank lines in a row to interpret.")
+      console.log("~~~~~~~~~~~~~~~ BEGIN INPUT ~~~~~~~~~~~~~~~\n\n")
+      pasteMode = true
+
+    // toggle classic / default interpretation mode
+    } else if (line === ":mode") {
+      mode = !mode
+      let modeStr: string
+      if (mode) modeStr = "classic"; else modeStr = "default"
+      console.log(`\nChanged interpretation mode to '${modeStr}'`)
+      rl.prompt()
+
+    } else if (line === ":quit") {
+      rl.prompt()
+      console.log(`${signoff}\n`)
+      process.exit(0)
+
+    // interpret single line
+    } else {
+      if (line.length > 0) interpret(line, mode)
+      rl.prompt()
+    }
+
+  }).on('close', () => {
+    console.log(`${signoff}\n`)
   })
 
 }
