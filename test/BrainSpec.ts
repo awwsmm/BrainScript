@@ -8,50 +8,50 @@ console.log = function (_: any) { }
 describe('bf, regardless of mode', () => {
 
   it ("throws an error when '[' is missing a matching ']'", () => {
-    expect(() => bf("[", true)).to.throw()
-    expect(() => bf("[", false)).to.throw()
+    expect(() => bf("[", false, false, true)).to.throw()
+    expect(() => bf("[", false, false, false)).to.throw()
   })
 
   it ("throws an error when ']' is missing a matching '['", () => {
-    expect(() => bf("+]", true)).to.throw()
-    expect(() => bf("+]", false)).to.throw()
+    expect(() => bf("+]", false, false, true)).to.throw()
+    expect(() => bf("+]", false, false, false)).to.throw()
   })
 
   it ("throws an error when the user gives a length-0 string as input", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    for (const mode of [ true, false ])
+    for (const classic of [ true, false ])
       for (const numin of [ true, false ])
-        expect(() => bf(",", mode, numin, false,  memory, () => UTF32Char.fromString(""))).to.throw()
+        expect(() => bf(",", numin, false, classic, memory, () => UTF32Char.fromString(""))).to.throw()
   })
 
   it ("throws an error when the user gives a length-3+ string as input", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    for (const mode of [ true, false ])
+    for (const classic of [ true, false ])
       for (const numin of [ true, false ])
-        expect(() => bf(",", mode, numin, false, memory, () => UTF32Char.fromString("abc"))).to.throw()
+        expect(() => bf(",", numin, false, classic, memory, () => UTF32Char.fromString("abc"))).to.throw()
   })
 
   it ("correctly interprets the addition example from Wikipedia", () => {
-    expect(bf(test_wikiAddition, true)).to.equal("7")
-    expect(bf(test_wikiAddition, false)).to.equal("7")
+    expect(bf(test_wikiAddition, false, false, true)).to.equal("7")
+    expect(bf(test_wikiAddition, false, false, false)).to.equal("7")
   })
 
   it ("correctly interprets the long 'Hello World!' example from Wikipedia", () => {
-    expect(bf(test_wikiHelloWorldLong, true)).to.equal("Hello World!\n")
-    expect(bf(test_wikiHelloWorldLong, false)).to.equal("Hello World!\n")
+    expect(bf(test_wikiHelloWorldLong, false, false, true)).to.equal("Hello World!\n")
+    expect(bf(test_wikiHelloWorldLong, false, false, false)).to.equal("Hello World!\n")
   })
 
   it ("correctly interprets the short 'Hello World!' example from Wikipedia", () => {
-    expect(bf(test_wikiHelloWorldShort, true)).to.equal("Hello World!\n")
-    expect(bf(test_wikiHelloWorldShort, false)).to.equal("Hello World!\n")
+    expect(bf(test_wikiHelloWorldShort, false, false, true)).to.equal("Hello World!\n")
+    expect(bf(test_wikiHelloWorldShort, false, false, false)).to.equal("Hello World!\n")
   })
 
   // https://codegolf.stackexchange.com/a/21857/79936
   it ("correctly interprets the two-part '42' example from StackExchange", () => {
-    expect(bf(test_se42Part1, true)).to.equal(test_se42Part2)
-    expect(bf(test_se42Part1, false)).to.equal(test_se42Part2)
-    expect(bf(test_se42Part2, true)).to.equal("6*7=42")
-    expect(bf(test_se42Part2, false)).to.equal("6*7=42")
+    expect(bf(test_se42Part1, false, false, true)).to.equal(test_se42Part2)
+    expect(bf(test_se42Part1, false, false, false)).to.equal(test_se42Part2)
+    expect(bf(test_se42Part2, false, false, true)).to.equal("6*7=42")
+    expect(bf(test_se42Part2, false, false, false)).to.equal("6*7=42")
   })
 
 })
@@ -61,25 +61,25 @@ describe('bf in classic mode', () => {
   const classic: boolean = true
 
   it ("does not throw an error when attempting to access negative memory cells", () => {
-    expect(() => bf("<", classic)).to.not.throw()
+    expect(() => bf("<", false, false, classic)).to.not.throw()
   })
 
   it ("does not throw an error when attempting to access too-high memory cells", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(">>", classic, false, false, memory)).to.not.throw()
+    expect(() => bf(">>", false, false, classic, memory)).to.not.throw()
   })
 
   it ("does not throw an error when attempting to set a cell to a negative value", () => {
-    expect(() => bf("-", classic)).to.not.throw()
+    expect(() => bf("-", false, false, classic)).to.not.throw()
   })
 
   it ("does not throw an error when attempting to set a cell to a too-high value", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",+", classic, false, false, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.not.throw()
+    expect(() => bf(",+", false, false, classic, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.not.throw()
   })
 
   it ("correctly interprets the code-golfed 'Hello, World!' example from StackExchange", () => {
-    expect(bf(test_seCodeGolfHelloWorld, classic)).to.equal("Hello, World!")
+    expect(bf(test_seCodeGolfHelloWorld, false, false, classic)).to.equal("Hello, World!")
   })
 
 })
@@ -89,25 +89,25 @@ describe('bf not in classic mode', () => {
   const classic: boolean = false
 
   it ("throws an error when attempting to access negative memory cells", () => {
-    expect(() => bf("<", classic)).to.throw()
+    expect(() => bf("<", false, false, classic)).to.throw()
   })
 
   it ("throws an error when attempting to access too-high memory cells", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(">>", classic, false, false, memory)).to.throw()
+    expect(() => bf(">>", false, false, classic, memory)).to.throw()
   })
 
   it ("throws an error when attempting to set a cell to a negative value", () => {
-    expect(() => bf("-", classic)).to.throw()
+    expect(() => bf("-", false, false, classic)).to.throw()
   })
 
   it ("throws an error when attempting to set a cell to a too-high value", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",+", classic, false, false, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.throw()
+    expect(() => bf(",+", false, false, classic, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.throw()
   })
 
   it ("throws an error with the code-golfed 'Hello, World!' example from StackExchange", () => {
-    expect(() => bf(test_seCodeGolfHelloWorld, classic)).to.throw()
+    expect(() => bf(test_seCodeGolfHelloWorld, false, false, classic)).to.throw()
   })
 
 })

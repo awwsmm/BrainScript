@@ -22,9 +22,9 @@ export function readUTF32Char(): UTF32Char {
 
 export function bf (
   program: string,
-  classic: boolean = false,
   numin: boolean = false,
   numout: boolean = false,
+  classic: boolean = false,
   memory: UInt32 = UInt32.fromNumber(1000),
   input: () => UTF32Char = readUTF32Char
     ): string {
@@ -239,9 +239,9 @@ export function bf (
 
 export function brain (): void {
 
-  let mode:   boolean = false // default interpretation mode (vs. 'classic')
-  let numin:  boolean = false // character input by default
-  let numout: boolean = false // character output by default
+  let classic: boolean = false // default interpretation mode ('default' vs. 'classic')
+  let numin:   boolean = false // character input by default
+  let numout:  boolean = false // character output by default
 
   const signoffs: Array<string> = [
     "Totsiens",      "Ma'a as-salaama", "Bidāẏa",      "Zdravo",          "Joigin",
@@ -265,10 +265,10 @@ export function brain (): void {
   let pasteMode: boolean = false
   let previousLine: string = ""
 
-  function interpret (program: string, mode: boolean, numin: boolean, numout: boolean): void {
+  function interpret (program: string, numin: boolean, numout: boolean, classic: boolean): void {
     const memory: UInt32 = UInt32.fromNumber(1000)
     try {
-      console.log(bf(program, mode, numin, numout, memory))
+      console.log(bf(program, numin, numout, classic, memory))
     } catch (error) {
       console.log(error.message)
     }
@@ -276,9 +276,9 @@ export function brain (): void {
 
   console.log("\nEnter single-line BF code below or")
   console.log("  type :paste to paste multiline code")
-  console.log("  type :mode to toggle classic / default mode")
   console.log("  type :numin to toggle numeric input mode")
   console.log("  type :numout to toggle numeric output mode")
+  console.log("  type :classic to toggle classic / default mode")
   console.log("  type :quit or enter <CTRL>-C to quit")
 
   const defaultPrompt: string = "\n🧠: "
@@ -291,7 +291,7 @@ export function brain (): void {
       // exit :paste mode
       if (previousLine === "" && previousLine === line) {
         console.log("~~~~~~~~~~~~~ INTERPRETING... ~~~~~~~~~~~~~\n")
-        interpret(multiLine, mode, numin, numout)
+        interpret(multiLine, numin, numout, classic)
         multiLine = ""
         pasteMode = false
         readlineSync.setDefaultOptions({prompt: defaultPrompt})
@@ -312,10 +312,10 @@ export function brain (): void {
       pasteMode = true
 
     // toggle classic / default interpretation mode
-    } else if (line === ":mode") {
-      mode = !mode
+    } else if (line === ":classic") {
+      classic = !classic
       let modeStr: string
-      if (mode) modeStr = "classic"; else modeStr = "default"
+      if (classic) modeStr = "classic"; else modeStr = "default"
       console.log(`\nChanged interpretation mode to '${modeStr}'`)
       return false
 
@@ -340,7 +340,7 @@ export function brain (): void {
 
     // interpret single line
     } else {
-      if (line.length > 0) interpret(line, mode, numin, numout)
+      if (line.length > 0) interpret(line, numin, numout, classic)
       return false
     }
   })
