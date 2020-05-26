@@ -2,6 +2,9 @@ import { expect } from 'chai'
 import { bf } from '../src'
 import { UInt32, UTF32Char } from 'utf32char'
 
+// suspend program output during testing
+console.log = function (_: any) { }
+
 describe('bf, regardless of mode', () => {
 
   it ("throws an error when '[' is missing a matching ']'", () => {
@@ -16,14 +19,16 @@ describe('bf, regardless of mode', () => {
 
   it ("throws an error when the user gives a length-0 string as input", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",", true, memory, () => UTF32Char.fromString(""))).to.throw()
-    expect(() => bf(",", false, memory, () => UTF32Char.fromString(""))).to.throw()
+    for (const mode of [ true, false ])
+      for (const numin of [ true, false ])
+        expect(() => bf(",", mode, numin, false,  memory, () => UTF32Char.fromString(""))).to.throw()
   })
 
   it ("throws an error when the user gives a length-3+ string as input", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",", true, memory, () => UTF32Char.fromString("abc"))).to.throw()
-    expect(() => bf(",", false, memory, () => UTF32Char.fromString("abc"))).to.throw()
+    for (const mode of [ true, false ])
+      for (const numin of [ true, false ])
+        expect(() => bf(",", mode, numin, false, memory, () => UTF32Char.fromString("abc"))).to.throw()
   })
 
   it ("correctly interprets the addition example from Wikipedia", () => {
@@ -61,7 +66,7 @@ describe('bf in classic mode', () => {
 
   it ("does not throw an error when attempting to access too-high memory cells", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(">>", classic, memory)).to.not.throw()
+    expect(() => bf(">>", classic, false, false, memory)).to.not.throw()
   })
 
   it ("does not throw an error when attempting to set a cell to a negative value", () => {
@@ -70,7 +75,7 @@ describe('bf in classic mode', () => {
 
   it ("does not throw an error when attempting to set a cell to a too-high value", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",+", classic, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.not.throw()
+    expect(() => bf(",+", classic, false, false, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.not.throw()
   })
 
   it ("correctly interprets the code-golfed 'Hello, World!' example from StackExchange", () => {
@@ -89,7 +94,7 @@ describe('bf not in classic mode', () => {
 
   it ("throws an error when attempting to access too-high memory cells", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(">>", classic, memory)).to.throw()
+    expect(() => bf(">>", classic, false, false, memory)).to.throw()
   })
 
   it ("throws an error when attempting to set a cell to a negative value", () => {
@@ -98,7 +103,7 @@ describe('bf not in classic mode', () => {
 
   it ("throws an error when attempting to set a cell to a too-high value", () => {
     const memory: UInt32 = UInt32.fromNumber(1)
-    expect(() => bf(",+", classic, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.throw()
+    expect(() => bf(",+", classic, false, false, memory, () => UTF32Char.fromNumber(UInt32.MAX_VALUE))).to.throw()
   })
 
   it ("throws an error with the code-golfed 'Hello, World!' example from StackExchange", () => {

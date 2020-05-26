@@ -25,7 +25,6 @@
   },
   "homepage": "https://github.com/awwsmm/BrainScript#readme",
   "dependencies": {
-    "fs": "0.0.1-security",
     "readline-sync": "^1.4.10",
     "utf32char": "^1.4.0"
   },

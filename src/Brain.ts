@@ -8,8 +8,10 @@ export function readUTF32Char(): UTF32Char {
   let input: string = ""
   while (true) {
     try {
-      input = readlineSync.question("> ")
-      return UTF32Char.fromString(input)
+      input = readlineSync.question("    ❓: ")
+      const char: UTF32Char = UTF32Char.fromString(input)
+      console.log("")
+      return char
     } catch (error) {
       console.log(error.message)
       console.log(`Not a valid UTF-32 character: "${input}"`)
@@ -18,8 +20,11 @@ export function readUTF32Char(): UTF32Char {
   }
 }
 
-export function bf ( program: string,
-  classic: boolean,
+export function bf (
+  program: string,
+  classic: boolean = false,
+  numin: boolean = false,
+  numout: boolean = false,
   memory: UInt32 = UInt32.fromNumber(1000),
   input: () => UTF32Char = readUTF32Char
     ): string {
@@ -155,6 +160,9 @@ export function bf ( program: string,
       throw new Error(`moveToMatch received invalid op: ${op}`)
     }
   }
+          
+  function isDigit (num: number): boolean { return num < 58 && num > 47 }
+  function toDigit (num: number): number { return num - 48 }
 
   // simply interpret token unless we see a '[' or a ']'
   while (programPointer.toNumber() < program.length) {
@@ -184,11 +192,42 @@ export function bf ( program: string,
 
       // output -- add to output buffer
       } else if (nextChar === '.') {
-        output += UTF32Char.fromUInt32(value).toString()
+        if (numout) {
+          let given: number = value.toNumber()
+
+          if (isDigit(given)) given = toDigit(given)
+          else {
+            let hiDigit: number = Math.floor(given / 10)
+            let loDigit: number = given - 10*hiDigit
+            if (isDigit(hiDigit) && isDigit(loDigit))
+              given = toDigit(hiDigit) * 10 + toDigit(loDigit)
+          }
+
+          output += given.toString()
+
+        } else output += UTF32Char.fromUInt32(value).toString()
 
       // input -- get one character from the user
       } else if (nextChar === ',') {
-        state[index] = input().toUInt32()
+        if (numin) {
+          console.log("\n    Please provide a 1 or 2-digit number for ',' input:")
+          let given: number = input().toNumber()
+
+          if (isDigit(given)) given = toDigit(given)
+          else {
+            let hiDigit: number = given >> 16
+            let loDigit: number = given & 0x0000FFFF
+            if (isDigit(hiDigit) && isDigit(loDigit))
+              given = toDigit(hiDigit) * 10 + toDigit(loDigit)
+            else throw new Error("non-digit characters entered in numeric mode")
+          }
+
+          state[index] = UInt32.fromNumber(given)
+
+        } else {
+          console.log("\n    Please provide a single character for ',' input:")
+          state[index] = input().toUInt32()
+        }
       }
     }
 
@@ -200,7 +239,9 @@ export function bf ( program: string,
 
 export function brain (): void {
 
-  let mode: boolean = false // default mode
+  let mode:   boolean = false // default interpretation mode (vs. 'classic')
+  let numin:  boolean = false // character input by default
+  let numout: boolean = false // character output by default
 
   const signoffs: Array<string> = [
     "Totsiens",      "Ma'a as-salaama", "Bidāẏa",      "Zdravo",          "Joigin",
@@ -220,43 +261,41 @@ export function brain (): void {
 
   const signoff = "👋 " + signoffs[Math.floor(Math.random() * signoffs.length)];
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: "\n🧠: "
-  })
-
-  console.log("\nEnter single-line BF code below or")
-  console.log("  type :paste to paste multiline code")
-  console.log("  type :mode to toggle classic / default mode")
-  console.log("  type :quit or enter <CTRL>-C or <CTRL>-D to quit")
-
   let multiLine: string = ""
   let pasteMode: boolean = false
   let previousLine: string = ""
 
-  rl.prompt()
-
-  function interpret (program: string, mode: boolean): void {
+  function interpret (program: string, mode: boolean, numin: boolean, numout: boolean): void {
+    const memory: UInt32 = UInt32.fromNumber(1000)
     try {
-      console.log(bf(program, mode))
+      console.log(bf(program, mode, numin, numout, memory))
     } catch (error) {
       console.log(error.message)
     }
   }
 
-  rl.on('line', (line: string) => {
+  console.log("\nEnter single-line BF code below or")
+  console.log("  type :paste to paste multiline code")
+  console.log("  type :mode to toggle classic / default mode")
+  console.log("  type :numin to toggle numeric input mode")
+  console.log("  type :numout to toggle numeric output mode")
+  console.log("  type :quit or enter <CTRL>-C to quit")
 
+  const defaultPrompt: string = "\n🧠: "
+  readlineSync.setDefaultOptions({prompt: defaultPrompt})
+  readlineSync.promptLoop(function(line: string) {
+    
     // continue in :paste mode
     if (pasteMode) {
 
       // exit :paste mode
       if (previousLine === "" && previousLine === line) {
-        console.log("~~~~~~~~~~~~~~~ BEGIN OUTPUT ~~~~~~~~~~~~~~\n")
-        interpret(multiLine, mode)
+        console.log("~~~~~~~~~~~~~ INTERPRETING... ~~~~~~~~~~~~~\n")
+        interpret(multiLine, mode, numin, numout)
         multiLine = ""
         pasteMode = false
-        rl.prompt()
+        readlineSync.setDefaultOptions({prompt: defaultPrompt})
+        return false
 
       // continue in :paste mode
       } else {
@@ -269,6 +308,7 @@ export function brain (): void {
       console.log("\nEntering multiline input mode.")
       console.log("Enter two blank lines in a row to interpret.")
       console.log("~~~~~~~~~~~~~~~ BEGIN INPUT ~~~~~~~~~~~~~~~\n\n")
+      readlineSync.setDefaultOptions({prompt: ""})
       pasteMode = true
 
     // toggle classic / default interpretation mode
@@ -277,21 +317,33 @@ export function brain (): void {
       let modeStr: string
       if (mode) modeStr = "classic"; else modeStr = "default"
       console.log(`\nChanged interpretation mode to '${modeStr}'`)
-      rl.prompt()
+      return false
+
+    // toggle numeric / character input mode
+    } else if (line === ":numin") {
+      numin = !numin
+      let numinStr: string
+      if (numin) numinStr = "numeric"; else numinStr = "character"
+      console.log(`\nChanged input mode to '${numinStr}'`)
+      return false
+
+    // toggle numeric / character output mode
+    } else if (line === ":numout") {
+      numout = !numout
+      let numoutStr: string
+      if (numout) numoutStr = "numeric"; else numoutStr = "character"
+      console.log(`\nChanged output mode to '${numoutStr}'`)
+      return false
 
     } else if (line === ":quit") {
-      rl.prompt()
-      console.log(`${signoff}\n`)
-      process.exit(0)
+      return true
 
     // interpret single line
     } else {
-      if (line.length > 0) interpret(line, mode)
-      rl.prompt()
+      if (line.length > 0) interpret(line, mode, numin, numout)
+      return false
     }
-
-  }).on('close', () => {
-    console.log(`${signoff}\n`)
   })
 
+  console.log(`${signoff}\n`)
 }
