@@ -1,5 +1,5 @@
 {
-  "name": "brainscript",
+  "name": "@awwsmm/brainscript",
   "version": "5.0.0",
   "description": "A BrainF*** interpreter written in TypeScript",
   "main": "build/index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/awwsmm/BrainScript.git"
+    "url": "https://github.com/awwsmm/BrainScript.git"
   },
   "keywords": [
     "brainfuck",
@@ -37,5 +37,11 @@
     "mocha": "^7.2.0",
     "ts-node": "^8.10.1",
     "typescript": "^3.9.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "bin": {
+    "brain": "npx ts-node brain.ts"
   }
 }
